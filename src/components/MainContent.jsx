@@ -39,31 +39,32 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
-import { useAddProductMutation, useDeleteProductMutation, useGetProductsQuery, useUpdateProductMutation } from "@/redux/api/product-api";
+import { useAddProductMutation, useDeleteProductMutation, useGetAllProductsQuery, useGetProductsQuery, useUpdateProductMutation } from "@/redux/api/product-api";
 
 const PAGE_LIMIT = 10;
 
 export default function MainContent() {
-  const [currentPage, setCurrentPage] = useState(7);
+  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [editProduct, setEditProduct] = useState(null);
   const [productTitle, setProductTitle] = useState('');
   const [productPrice, setProductPrice] = useState('');
+  const [productDescription, setProductDescription] = useState('');
+  const [productCategoryId, setProductCategoryId] = useState('');
+  const [productImages, setProductImages] = useState([]);
   const [deleteProduct, { isLoading: deleteProductLoading }] = useDeleteProductMutation();
   const [updateProduct] = useUpdateProductMutation();
   const { data: productData, isLoading: productLoading, refetch } = useGetProductsQuery({ page: currentPage, limit: PAGE_LIMIT });
   const [addProduct, { isLoading: addProductLoading }] = useAddProductMutation();
+  const { data: allProductData } = useGetAllProductsQuery();
 
-  const [productDescription, setProductDescription] = useState('');
-  const [productCategoryId, setProductCategoryId] = useState('');
-  const [productImages, setProductImages] = useState('');
 
   const handleAddProduct = async () => {
-    if (!productTitle || !productPrice) {
-      console.error('Title and Price are required');
+    if (!productTitle || !productPrice || productImages.length === 0) {
+      console.error('Title, Price, and at least one image are required');
       return;
     }
-  
+
     const newProduct = {
       title: productTitle,
       price: parseFloat(productPrice),
@@ -71,7 +72,7 @@ export default function MainContent() {
       categoryId: productCategoryId,
       images: productImages,
     };
-  
+
     try {
       const response = await addProduct(newProduct).unwrap();
       console.log('Product added successfully:', response);
@@ -79,17 +80,18 @@ export default function MainContent() {
       setProductPrice('');
       setProductDescription('');
       setProductCategoryId('');
-      setProductImages('');
+      setProductImages([]);
       refetch();
     } catch (error) {
       console.error('Failed to add product:', error);
     }
   };
-  
+
+
 
   useEffect(() => {
     if (productData) {
-      setTotalPages(Math.ceil(productData.total / PAGE_LIMIT));
+      setTotalPages(Math.ceil(allProductData?.length / PAGE_LIMIT));
     }
   }, [productData]);
 
@@ -124,7 +126,7 @@ export default function MainContent() {
     <div className="m-8 shadow-bxshadow rounded-md py-7 px-6">
       <div className='flex justify-between'>
         <h2 className="text-2xl font-bold flex items-center gap-2">
-          Products <Badge>{productData?.length || 0}</Badge>
+          Products <Badge>{allProductData?.length || 0}</Badge>
         </h2>
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -182,8 +184,8 @@ export default function MainContent() {
               <Input
                 type="text"
                 id="images"
-                value={productImages}
-                onChange={(e) => setProductImages(e.target.value)}
+                value={productImages.join(', ')}
+                onChange={(e) => setProductImages(e.target.value.split(',').map(img => img.trim()))}
                 placeholder="Images"
               />
             </div>
