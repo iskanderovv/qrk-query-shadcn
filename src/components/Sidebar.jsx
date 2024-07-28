@@ -7,7 +7,7 @@ const SidebarComponent = ({ collapse }) => {
   const [active, setActive] = useState("products");
 
   return (
-    <aside className={`text-[#020817] shadow-bxshadow h-screen ${collapse ? "w-[90px] transition" : "w-[300px]"} py-6 px-4`}>
+    <aside className={`text-[#020817] shadow-bxshadow h-screen sticky left-0 top-0 ${collapse ? "w-[90px] transition" : "w-[300px]"} py-6 px-4`}>
       <Link
         to='/'
         className={`text-3xl block font-mono text-[#020817] text-center mb-7 ${collapse ? "text-xl" : ""}`}

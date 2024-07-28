@@ -14,7 +14,7 @@ const Header = ({collapse, setCollapse}) => {
   };
 
   return (
-    <header className=" text-[#020817] py-6 px-5 w-full flex justify-between items-center shadow-bxshadow">
+    <header className=" text-[#020817] py-6 px-5 w-full sticky top-0 z-10 bg-white flex justify-between items-center shadow-bxshadow">
       <div className="text-2xl cursor-pointer">
         {collapse ? <BsLayoutSidebarReverse onClick={() => toggleCollapse()} /> : <BsLayoutSidebar onClick={() => toggleCollapse()} />}
       </div>
