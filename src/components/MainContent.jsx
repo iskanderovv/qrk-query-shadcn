@@ -37,28 +37,73 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { useDeleteProductMutation, useGetProductsQuery } from "@/redux/api/product-api";
+import { Label } from './ui/label';
+import { Input } from './ui/input';
+import { useAddProductMutation, useDeleteProductMutation, useGetProductsQuery, useUpdateProductMutation } from "@/redux/api/product-api";
 
 const PAGE_LIMIT = 10;
 
 export default function MainContent() {
-  const [currentPage, setCurrentPage] = useState(1); // Start at page 1
+  const [currentPage, setCurrentPage] = useState(7);
   const [totalPages, setTotalPages] = useState(1);
+  const [editProduct, setEditProduct] = useState(null);
+  const [productTitle, setProductTitle] = useState('');
+  const [productPrice, setProductPrice] = useState('');
   const [deleteProduct, { isLoading: deleteProductLoading }] = useDeleteProductMutation();
+  const [updateProduct] = useUpdateProductMutation();
   const { data: productData, isLoading: productLoading, refetch } = useGetProductsQuery({ page: currentPage, limit: PAGE_LIMIT });
+  const [addProduct, { isLoading: addProductLoading }] = useAddProductMutation();
+
+  const [productDescription, setProductDescription] = useState('');
+  const [productCategoryId, setProductCategoryId] = useState('');
+  const [productImages, setProductImages] = useState('');
+
+  const handleAddProduct = async () => {
+    if (!productTitle || !productPrice) {
+      console.error('Title and Price are required');
+      return;
+    }
+  
+    const newProduct = {
+      title: productTitle,
+      price: parseFloat(productPrice),
+      description: productDescription,
+      categoryId: productCategoryId,
+      images: productImages,
+    };
+  
+    try {
+      const response = await addProduct(newProduct).unwrap();
+      console.log('Product added successfully:', response);
+      setProductTitle('');
+      setProductPrice('');
+      setProductDescription('');
+      setProductCategoryId('');
+      setProductImages('');
+      refetch();
+    } catch (error) {
+      console.error('Failed to add product:', error);
+    }
+  };
+  
 
   useEffect(() => {
     if (productData) {
-      setTotalPages(Math.ceil(100 / PAGE_LIMIT));
+      setTotalPages(Math.ceil(productData.total / PAGE_LIMIT));
     }
   }, [productData]);
-  console.log(productData);
-
-
 
   const handleDeleteProduct = async (id) => {
     await deleteProduct(id);
     refetch();
+  };
+
+  const handleUpdateProduct = async () => {
+    if (editProduct) {
+      await updateProduct({ id: editProduct.id, productData: { title: productTitle, price: productPrice } });
+      refetch();
+      setEditProduct(null);
+    }
   };
 
   const handleNextPage = () => {
@@ -75,18 +120,85 @@ export default function MainContent() {
     }
   };
 
-  console.log(`Current Page: ${currentPage}, Total Pages: ${totalPages}`);
-
   return (
     <div className="m-8 shadow-bxshadow rounded-md py-7 px-6">
       <div className='flex justify-between'>
         <h2 className="text-2xl font-bold flex items-center gap-2">
           Products <Badge>{productData?.length || 0}</Badge>
         </h2>
-        <Button className="flex items-center gap-1 my-4">
-          <span className='text-2xl font-normal'>+</span>
-          <span>Qo'shish</span>
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button className="">Add Product</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Add Product</AlertDialogTitle>
+              <AlertDialogDescription>
+                Add a new product to the list.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="title">Title</Label>
+              <Input
+                type="text"
+                id="title"
+                value={productTitle}
+                onChange={(e) => setProductTitle(e.target.value)}
+                placeholder="Title"
+              />
+            </div>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="price">Price</Label>
+              <Input
+                type="text"
+                id="price"
+                value={productPrice}
+                onChange={(e) => setProductPrice(e.target.value)}
+                placeholder="Price"
+              />
+            </div>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="description">Description</Label>
+              <Input
+                type="text"
+                id="description"
+                value={productDescription}
+                onChange={(e) => setProductDescription(e.target.value)}
+                placeholder="Description"
+              />
+            </div>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="categoryId">Category ID</Label>
+              <Input
+                type="text"
+                id="categoryId"
+                value={productCategoryId}
+                onChange={(e) => setProductCategoryId(e.target.value)}
+                placeholder="Category ID"
+              />
+            </div>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="images">Images</Label>
+              <Input
+                type="text"
+                id="images"
+                value={productImages}
+                onChange={(e) => setProductImages(e.target.value)}
+                placeholder="Images"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleAddProduct}
+                disabled={addProductLoading}
+              >
+                {addProductLoading ? 'Adding...' : 'Add Product'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
       </div>
       <Table>
         <TableCaption>Recently added products</TableCaption>
@@ -118,9 +230,13 @@ export default function MainContent() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="flex flex-col gap-y-1 p-2 px-4 py-4 justify-start items-start">
                       <DropdownMenuItem asChild>
-                        <Dialog>
+                        <Dialog open={!!editProduct}>
                           <DialogTrigger asChild>
-                            <button className="w-full text-left text-green-500">Edit</button>
+                            <button className="w-full text-left text-green-500" onClick={() => {
+                              setEditProduct(product);
+                              setProductTitle(product.title);
+                              setProductPrice(product.price);
+                            }}>Edit</button>
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
@@ -129,7 +245,34 @@ export default function MainContent() {
                                 Make changes to the product details below.
                               </DialogDescription>
                             </DialogHeader>
-                            
+                            <div className='flex gap-10 flex-col'>
+                              <div className='flex gap-3 flex-col'>
+                                <Label htmlFor="title">Title</Label>
+                                <Input
+                                  type="text"
+                                  id="title"
+                                  value={productTitle}
+                                  onChange={(e) => setProductTitle(e.target.value)}
+                                  placeholder="Title"
+                                />
+                              </div>
+                              <div className='flex gap-3 flex-col'>
+                                <Label htmlFor="price">Price</Label>
+                                <Input
+                                  type="text"
+                                  id="price"
+                                  value={productPrice}
+                                  onChange={(e) => setProductPrice(e.target.value)}
+                                  placeholder="Price"
+                                />
+                              </div>
+                              <Button
+                                className="w-full"
+                                onClick={handleUpdateProduct}
+                              >
+                                Save Changes
+                              </Button>
+                            </div>
                           </DialogContent>
                         </Dialog>
                       </DropdownMenuItem>
