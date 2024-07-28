@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -7,83 +8,99 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-
-const invoices = [
-  {
-    invoice: "INV001",
-    paymentStatus: "Paid",
-    totalAmount: "$250.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV002",
-    paymentStatus: "Pending",
-    totalAmount: "$150.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV003",
-    paymentStatus: "Unpaid",
-    totalAmount: "$350.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV004",
-    paymentStatus: "Paid",
-    totalAmount: "$450.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV005",
-    paymentStatus: "Paid",
-    totalAmount: "$550.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV006",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV007",
-    paymentStatus: "Unpaid",
-    totalAmount: "$300.00",
-    paymentMethod: "Credit Card",
-  },
-]
+} from "@/components/ui/table";
+import { useGetProductsQuery } from "@/redux/api/product-api";
+import { Button } from './ui/button';
 
 export default function MainContent() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 10;
+
+  const { data: productData, isLoading: productLoading } = useGetProductsQuery({
+    page: currentPage,
+    limit: productsPerPage,
+  });
+
+  const totalPages = productData?.length || 1;
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prevPage => prevPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prevPage => prevPage - 1);
+    }
+  };
+
+  console.log(`Current Page: ${currentPage}, Total Pages: ${totalPages}`);
+
   return (
-    <div className="m-8 shadow-bxshadow rounded-md py-4 px-2">
+    <div className="m-8 shadow-bxshadow rounded-md py-7 px-6">
+      <div className='flex justify-between'>
+        <h2 className="text-2xl font-bold">Products</h2>
+        <Button className="flex items-center gap-1 my-4">
+          <span className='text-2xl font-normal'>+</span>
+          <span>Qo'shish</span>
+        </Button>
+      </div>
       <Table>
-      <TableCaption>A list of your recent invoices.</TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[100px]">Invoice</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Method</TableHead>
-          <TableHead className="text-right">Amount</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {invoices.map((invoice) => (
-          <TableRow key={invoice.invoice}>
-            <TableCell className="font-medium">{invoice.invoice}</TableCell>
-            <TableCell>{invoice.paymentStatus}</TableCell>
-            <TableCell>{invoice.paymentMethod}</TableCell>
-            <TableCell className="text-right">{invoice.totalAmount}</TableCell>
+        {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[100px]">ID</TableHead>
+            <TableHead>Title</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead className="text-right">Price</TableHead>
+            <TableHead className="text-right">Edit</TableHead>
+            <TableHead className="text-right">Delete</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-      <TableFooter>
-        <TableRow>
-          <TableCell colSpan={3}>Total</TableCell>
-          <TableCell className="text-right">$2,500.00</TableCell>
-        </TableRow>
-      </TableFooter>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {productData?.map((product) => (
+            <TableRow key={product.id}>
+              <TableCell className="font-medium">{product.id}</TableCell>
+              <TableCell className="font-medium">{product.title}</TableCell>
+              <TableCell>{product.category.name}</TableCell>
+              <TableCell className="text-right">${product.price}</TableCell>
+              <TableCell className="text-right">${product.price}</TableCell>
+              <TableCell className="text-right">${product.price}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={3}>Total</TableCell>
+            <TableCell className="text-right">
+              ${productData?.reduce((total, product) => total + product.price, 0).toFixed(2)}
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      </Table>
+
+      <div className="flex justify-end">
+        <div className="flex justify-between items-center gap-4 mt-4">
+          <button
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
