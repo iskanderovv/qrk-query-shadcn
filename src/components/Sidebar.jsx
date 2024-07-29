@@ -7,34 +7,47 @@ const SidebarComponent = ({ collapse }) => {
   const [active, setActive] = useState("products");
 
   return (
-    <aside className={`text-[#020817] shadow-bxshadow h-screen sticky left-0 top-0 ${collapse ? "w-[90px] transition" : "w-[300px]"} py-6 px-4`}>
+    <aside
+      className={`text-[#020817] shadow-bxshadow h-screen sticky left-0 top-0 py-6 px-4 
+        transition-width duration-300 ease-in-out
+        ${collapse ? "w-[90px]" : "w-[300px]"}
+      `}
+    >
       <Link
         to='/'
-        className={`text-3xl block font-mono text-[#020817] text-center mb-7 ${collapse ? "text-xl" : ""}`}
+        className={`text-3xl block font-mono text-[#020817] text-center mb-7`}
       >
-        Ai.Dev
+        {collapse ? "Ai" : "Ai.Dev"}
       </Link>
       <ul>
         <li>
           <Button
-            className={`w-full p-3 rounded-md flex items-center gap-2 ${
-              active === "products" ? "bg-[#0f172a] text-white" : "bg-white text-[#020817]"
-            } transition-colors hover:${active === "products" ? "bg-[#0f172a]" : "bg-gray-200"}`}
+            className={`w-full p-3 rounded-md flex items-center gap-2 
+              ${active === "products" ? "bg-[#0f172a] text-white" : "bg-white text-[#020817]"}
+              transition-colors duration-300 ease-in-out
+              hover:${active === "products" ? "bg-[#0f172a]" : "bg-gray-200"}
+            `}
             onClick={() => setActive("products")}
           >
             <AiOutlineCodeSandbox className="text-2xl" />
-            <span className={`font-normal text-[18px] ${collapse ? "hidden" : ""}`}>Products</span>
+            <span className={`font-normal text-[18px] ${collapse ? "hidden" : ""}`}>
+              Products
+            </span>
           </Button>
         </li>
         {/* <li>
           <Button
-            className={`w-full p-3 rounded-md flex items-center gap-2 ${
-              active === "users" ? "bg-[#0f172a] text-white" : "bg-white text-[#020817]"
-            } transition-colors hover:${active === "users" ? "bg-[#0f172a]" : "bg-gray-200"}`}
+            className={`w-full p-3 rounded-md flex items-center gap-2 
+              ${active === "users" ? "bg-[#0f172a] text-white" : "bg-white text-[#020817]"}
+              transition-colors duration-300 ease-in-out
+              hover:${active === "users" ? "bg-[#0f172a]" : "bg-gray-200"}
+            `}
             onClick={() => setActive("users")}
           >
             <AiOutlineUser className="text-2xl" />
-            <span className={`font-normal text-[18px] ${collapse ? "hidden" : ""}`}>Users</span>
+            <span className={`font-normal text-[18px] ${collapse ? "hidden" : ""}`}>
+              Users
+            </span>
           </Button>
         </li> */}
       </ul>
