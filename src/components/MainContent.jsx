@@ -1,5 +1,6 @@
 import { EllipsisVertical } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { SyncLoader } from 'react-spinners';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +40,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
+import { toast } from "sonner";
 import { useAddProductMutation, useDeleteProductMutation, useGetAllProductsQuery, useGetProductsQuery, useUpdateProductMutation } from "@/redux/api/product-api";
 
 const PAGE_LIMIT = 10;
@@ -53,11 +55,11 @@ export default function MainContent() {
   const [productCategoryId, setProductCategoryId] = useState('');
   const [productImages, setProductImages] = useState([]);
   const [deleteProduct, { isLoading: deleteProductLoading }] = useDeleteProductMutation();
-  const [updateProduct] = useUpdateProductMutation();
-  const { data: productData, isLoading: productLoading, refetch } = useGetProductsQuery({ page: currentPage, limit: PAGE_LIMIT });
+  const [updateProduct, { isLoading: updateProductLoading }] = useUpdateProductMutation();
   const [addProduct, { isLoading: addProductLoading }] = useAddProductMutation();
+  const { data: productData, isLoading: productLoading, refetch } = useGetProductsQuery({ page: currentPage, limit: PAGE_LIMIT });
   const { data: allProductData } = useGetAllProductsQuery();
-
+  const [paginationLoading, setPaginationLoading] = useState(false);
 
   const handleAddProduct = async () => {
     if (!productTitle || !productPrice || productImages.length === 0) {
@@ -81,13 +83,28 @@ export default function MainContent() {
       setProductDescription('');
       setProductCategoryId('');
       setProductImages([]);
+      toast.success("Product added successfully", {
+        description: getCurrentDateTime(),
+        duration: 3000,
+        position: 'top-right',
+      });
       refetch();
     } catch (error) {
       console.error('Failed to add product:', error);
+      toast.error("Failed to add product", {
+        description: getCurrentDateTime(),
+        position: 'top-right',
+      });
     }
   };
 
-
+  const getCurrentDateTime = () => {
+    const date = new Date();
+    return date.toLocaleString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', hour12: true
+    });
+  };
 
   useEffect(() => {
     if (productData) {
@@ -96,35 +113,56 @@ export default function MainContent() {
   }, [productData]);
 
   const handleDeleteProduct = async (id) => {
-    await deleteProduct(id);
-    refetch();
+    try {
+      setPaginationLoading(true);
+      await deleteProduct(id).unwrap();
+      refetch();
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+    } finally {
+      setPaginationLoading(false);
+    }
   };
 
   const handleUpdateProduct = async () => {
     if (editProduct) {
-      await updateProduct({ id: editProduct.id, productData: { title: productTitle, price: productPrice } });
-      refetch();
-      setEditProduct(null);
+      try {
+        setPaginationLoading(true);
+        await updateProduct({ id: editProduct.id, productData: { title: productTitle, price: productPrice } }).unwrap();
+        refetch();
+        setEditProduct(null);
+      } catch (error) {
+        console.error('Failed to update product:', error);
+      } finally {
+        setPaginationLoading(false);
+      }
     }
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
+      setPaginationLoading(true);
       setCurrentPage(currentPage + 1);
-      refetch();
+      refetch().finally(() => setPaginationLoading(false));
     }
   };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
+      setPaginationLoading(true);
       setCurrentPage(currentPage - 1);
-      refetch();
+      refetch().finally(() => setPaginationLoading(false));
     }
   };
 
   return (
-    <div className="m-8 shadow-bxshadow rounded-md py-7 px-6">
-      <div className='flex justify-between'>
+    <div className="m-8 shadow-bxshadow rounded-md py-7 px-6 relative">
+      {productLoading || paginationLoading ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-50">
+          <SyncLoader />
+        </div>
+      ) : null}
+      <div className='flex justify-between mb-4'>
         <h2 className="text-2xl font-bold flex items-center gap-2">
           Products <Badge>{allProductData?.length || 0}</Badge>
         </h2>
@@ -200,7 +238,6 @@ export default function MainContent() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
       </div>
       <Table>
         <TableCaption>Recently added products</TableCaption>
@@ -214,132 +251,132 @@ export default function MainContent() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {productLoading ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center">Loading...</TableCell>
+          {productData?.map((product) => (
+            <TableRow key={product.id}>
+              <TableCell className="font-medium">{product.id}</TableCell>
+              <TableCell className="font-medium">{product.title}</TableCell>
+              <TableCell>{product.categoryId}</TableCell>
+              <TableCell>${product.price.toFixed(2)}</TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <EllipsisVertical />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setEditProduct(product);
+                        setProductTitle(product.title);
+                        setProductPrice(product.price.toString());
+                        setProductCategoryId(product.categoryId);
+                        setProductDescription(product.description || '');
+                        setProductImages(product.images || []);
+                      }}
+                    >
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDeleteProduct(product.id)}
+                      className="text-red-500"
+                      disabled={deleteProductLoading}
+                    >
+                      {deleteProductLoading ? 'Deleting...' : 'Delete'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>
-          ) : (
-            productData?.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell className="font-medium">{product.id}</TableCell>
-                <TableCell className="font-medium">{product.title}</TableCell>
-                <TableCell>{product.category.name}</TableCell>
-                <TableCell>${product.price}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className='outline-none text-2xl'>
-                      <EllipsisVertical />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="flex flex-col gap-y-1 p-2 px-4 py-4 justify-start items-start">
-                      <DropdownMenuItem asChild>
-                        <Dialog open={!!editProduct}>
-                          <DialogTrigger asChild>
-                            <button className="w-full text-left text-green-500" onClick={() => {
-                              setEditProduct(product);
-                              setProductTitle(product.title);
-                              setProductPrice(product.price);
-                            }}>Edit</button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Edit Product</DialogTitle>
-                              <DialogDescription>
-                                Make changes to the product details below.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className='flex gap-10 flex-col'>
-                              <div className='flex gap-3 flex-col'>
-                                <Label htmlFor="title">Title</Label>
-                                <Input
-                                  type="text"
-                                  id="title"
-                                  value={productTitle}
-                                  onChange={(e) => setProductTitle(e.target.value)}
-                                  placeholder="Title"
-                                />
-                              </div>
-                              <div className='flex gap-3 flex-col'>
-                                <Label htmlFor="price">Price</Label>
-                                <Input
-                                  type="text"
-                                  id="price"
-                                  value={productPrice}
-                                  onChange={(e) => setProductPrice(e.target.value)}
-                                  placeholder="Price"
-                                />
-                              </div>
-                              <Button
-                                className="w-full"
-                                onClick={handleUpdateProduct}
-                              >
-                                Save Changes
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <button className="w-full text-left text-red-500">Delete</button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete your product.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteProduct(product.id)}
-                                disabled={deleteProductLoading}
-                              >
-                                {deleteProductLoading ? 'Deleting...' : 'Delete'}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
+          ))}
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={3}>Total</TableCell>
-            <TableCell colSpan={1} className="text-right">
-              $200
-            </TableCell>
+            <TableHead colSpan={5}>
+              <div className='flex justify-between'>
+                <Button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1 || paginationLoading}
+                >
+                  {paginationLoading ? 'Loading...' : 'Previous'}
+                </Button>
+                <Button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages || paginationLoading}
+                >
+                  {paginationLoading ? 'Loading...' : 'Next'}
+                </Button>
+              </div>
+            </TableHead>
           </TableRow>
         </TableFooter>
       </Table>
-
-      <div className="flex justify-end">
-        <div className="flex justify-between items-center gap-4 mt-4">
-          <button
-            onClick={handlePreviousPage}
-            disabled={currentPage === 1}
-            className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      </div>
+      {editProduct && (
+        <Dialog open={!!editProduct} onOpenChange={() => setEditProduct(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Product</DialogTitle>
+              <DialogDescription>
+                Update the details of the product.
+              </DialogDescription>
+            </DialogHeader>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                type="text"
+                id="edit-title"
+                value={productTitle}
+                onChange={(e) => setProductTitle(e.target.value)}
+                placeholder="Title"
+              />
+            </div>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="edit-price">Price</Label>
+              <Input
+                type="text"
+                id="edit-price"
+                value={productPrice}
+                onChange={(e) => setProductPrice(e.target.value)}
+                placeholder="Price"
+              />
+            </div>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="edit-description">Description</Label>
+              <Input
+                type="text"
+                id="edit-description"
+                value={productDescription}
+                onChange={(e) => setProductDescription(e.target.value)}
+                placeholder="Description"
+              />
+            </div>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="edit-categoryId">Category ID</Label>
+              <Input
+                type="text"
+                id="edit-categoryId"
+                value={productCategoryId}
+                onChange={(e) => setProductCategoryId(e.target.value)}
+                placeholder="Category ID"
+              />
+            </div>
+            <div className='flex gap-3 flex-col'>
+              <Label htmlFor="edit-images">Images</Label>
+              <Input
+                type="text"
+                id="edit-images"
+                value={productImages.join(', ')}
+                onChange={(e) => setProductImages(e.target.value.split(',').map(img => img.trim()))}
+                placeholder="Images"
+              />
+            </div>
+            <Button
+              onClick={handleUpdateProduct}
+              disabled={updateProductLoading}
+            >
+              {updateProductLoading ? 'Updating...' : 'Update Product'}
+            </Button>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
