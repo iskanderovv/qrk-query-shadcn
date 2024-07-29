@@ -8,7 +8,7 @@ const SidebarComponent = ({ collapse }) => {
 
   return (
     <aside
-      className={`text-[#020817] shadow-bxshadow h-screen sticky left-0 top-0 py-6 px-4 
+      className={`text-[#020817] shadow-bxshadow h-screen sticky left-0 top-0 py-6 px-3 
         transition-width duration-300 ease-in-out
         ${collapse ? "w-[90px]" : "w-[300px]"}
       `}
@@ -22,7 +22,7 @@ const SidebarComponent = ({ collapse }) => {
       <ul>
         <li>
           <Button
-            className={`w-full p-3 rounded-md flex items-center gap-2 
+            className={`w-full p-2 py-4 rounded-md flex items-center gap-2 
               ${active === "products" ? "bg-[#0f172a] text-white" : "bg-white text-[#020817]"}
               transition-colors duration-300 ease-in-out
               hover:${active === "products" ? "bg-[#0f172a]" : "bg-gray-200"}

@@ -13,7 +13,8 @@ const Auth = lazy(() => import('./auth/Auth'));
 const Dashboard = lazy(() => import('./dashboard/Dashboard'));
 
 const RouteController = () => {
-  
+  const auth = useSelector(state => state.auth);
+  console.log(auth);
   return useRoutes([
     {
       path: "",

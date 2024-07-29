@@ -2,6 +2,15 @@ import { EllipsisVertical } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { SyncLoader } from 'react-spinners';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -139,20 +148,30 @@ export default function MainContent() {
     }
   };
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setPaginationLoading(true);
-      setCurrentPage(currentPage + 1);
-      refetch().finally(() => setPaginationLoading(false));
-    }
+  const handlePageChange = (pageNumber) => {
+    setPaginationLoading(true);
+    setCurrentPage(pageNumber);
+    refetch().finally(() => setPaginationLoading(false));
   };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
-      setPaginationLoading(true);
-      setCurrentPage(currentPage - 1);
-      refetch().finally(() => setPaginationLoading(false));
+      handlePageChange(currentPage - 1);
     }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  const handleFirstPage = () => {
+    handlePageChange(1);
+  };
+
+  const handleLastPage = () => {
+    handlePageChange(totalPages);
   };
 
   return (
@@ -240,7 +259,6 @@ export default function MainContent() {
         </AlertDialog>
       </div>
       <Table>
-        <TableCaption>Recently added products</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">ID</TableHead>
@@ -288,27 +306,75 @@ export default function MainContent() {
             </TableRow>
           ))}
         </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableHead colSpan={5}>
-              <div className='flex justify-between'>
-                <Button
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1 || paginationLoading}
-                >
-                  {paginationLoading ? 'Loading...' : 'Previous'}
-                </Button>
-                <Button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages || paginationLoading}
-                >
-                  {paginationLoading ? 'Loading...' : 'Next'}
-                </Button>
-              </div>
-            </TableHead>
-          </TableRow>
-        </TableFooter>
       </Table>
+      <Pagination className='my-4'>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </PaginationPrevious>
+          </PaginationItem>
+
+          {currentPage > 2 && (
+            <PaginationItem>
+              <PaginationLink
+                href="#"
+                onClick={handleFirstPage}
+              >
+                1
+              </PaginationLink>
+            </PaginationItem>
+          )}
+
+          {currentPage > 3 && <PaginationItem><PaginationEllipsis /></PaginationItem>}
+
+          {[...Array(Math.min(3, totalPages))].map((_, index) => {
+            const pageNumber = currentPage - 1 + index;
+            if (pageNumber > 0 && pageNumber <= totalPages) {
+              return (
+                <PaginationItem key={pageNumber}>
+                  <PaginationLink
+                    href="#"
+                    isActive={currentPage === pageNumber}
+                    onClick={() => handlePageChange(pageNumber)}
+                  >
+                    {pageNumber}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            }
+            return null;
+          })}
+
+          {currentPage < totalPages - 2 && <PaginationItem><PaginationEllipsis /></PaginationItem>}
+
+          {currentPage < totalPages - 1 && (
+            <PaginationItem>
+              <PaginationLink
+                href="#"
+                onClick={handleLastPage}
+              >
+                {totalPages}
+              </PaginationLink>
+            </PaginationItem>
+          )}
+
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </PaginationNext>
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+
       {editProduct && (
         <Dialog open={!!editProduct} onOpenChange={() => setEditProduct(null)}>
           <DialogContent>
