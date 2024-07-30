@@ -6,9 +6,9 @@ const baseQuery = async (args, api, extraOptions) => {
     const rawBaseQuery = fetchBaseQuery({
         baseUrl: import.meta.env.VITE_BASE_URL,
         prepareHeaders: (headers) => {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem("admin-auth-token");
             if(token){
-                headers.set("Authorization", `Bearer ${token}`)
+                headers.set("Authorization", `Bearer ${token}`);
             }
             return headers
         }

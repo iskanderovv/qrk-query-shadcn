@@ -46,13 +46,13 @@ export default function Auth() {
   useEffect(() => {
     if (isFormSubmitted) {
       if (isSuccess) {
-        dispatch(loginUser(data?.payload?.access_token));
+        dispatch(loginUser(data?.access_token));
         toast.success("Login successfully", {
           description: getCurrentDateTime(),
           duration: 3000,
           position: 'top-right',
         });
-        navigate("/dashboard");
+        // navigate("/dashboard");
       } else {
         toast.error("Something went wrong", {
           description: getCurrentDateTime(),
