@@ -201,7 +201,7 @@ export default function MainContent() {
               <Input
                 type="text"
                 id="title"
-                value={productTitle}
+                // value={productTitle}
                 onChange={(e) => setProductTitle(e.target.value)}
                 placeholder="Title"
               />
@@ -211,7 +211,7 @@ export default function MainContent() {
               <Input
                 type="text"
                 id="price"
-                value={productPrice}
+                // value={productPrice}
                 onChange={(e) => setProductPrice(e.target.value)}
                 placeholder="Price"
               />
@@ -221,7 +221,7 @@ export default function MainContent() {
               <Input
                 type="text"
                 id="description"
-                value={productDescription}
+                // value={productDescription}
                 onChange={(e) => setProductDescription(e.target.value)}
                 placeholder="Description"
               />
@@ -231,7 +231,7 @@ export default function MainContent() {
               <Input
                 type="text"
                 id="categoryId"
-                value={productCategoryId}
+                // value={productCategoryId}
                 onChange={(e) => setProductCategoryId(e.target.value)}
                 placeholder="Category ID"
               />
@@ -241,7 +241,7 @@ export default function MainContent() {
               <Input
                 type="text"
                 id="images"
-                value={productImages.join(', ')}
+                // value={productImages.join(', ')}
                 onChange={(e) => setProductImages(e.target.value.split(',').map(img => img.trim()))}
                 placeholder="Images"
               />
@@ -273,7 +273,7 @@ export default function MainContent() {
             <TableRow key={product.id}>
               <TableCell className="font-medium">{product.id}</TableCell>
               <TableCell className="font-medium">{product.title}</TableCell>
-              <TableCell>{product.categoryId}</TableCell>
+              <TableCell>{product.category.name}</TableCell>
               <TableCell>${product.price.toFixed(2)}</TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -404,7 +404,7 @@ export default function MainContent() {
                 placeholder="Price"
               />
             </div>
-            <div className='flex gap-3 flex-col'>
+            {/*<div className='flex gap-3 flex-col'>
               <Label htmlFor="edit-description">Description</Label>
               <Input
                 type="text"
@@ -414,7 +414,7 @@ export default function MainContent() {
                 placeholder="Description"
               />
             </div>
-            <div className='flex gap-3 flex-col'>
+             <div className='flex gap-3 flex-col'>
               <Label htmlFor="edit-categoryId">Category ID</Label>
               <Input
                 type="text"
@@ -433,7 +433,7 @@ export default function MainContent() {
                 onChange={(e) => setProductImages(e.target.value.split(',').map(img => img.trim()))}
                 placeholder="Images"
               />
-            </div>
+            </div> */}
             <Button
               onClick={handleUpdateProduct}
               disabled={updateProductLoading}

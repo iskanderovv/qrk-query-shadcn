@@ -2,7 +2,6 @@ import { useRoutes } from 'react-router-dom';
 import { lazy } from 'react';
 
 import Suspense from '../utils/index';
-import { useSelector } from 'react-redux';
 
 // import Home from './home/Home';
 // import Auth from './auth/Auth';
@@ -13,8 +12,6 @@ const Auth = lazy(() => import('./auth/Auth'));
 const Dashboard = lazy(() => import('./dashboard/Dashboard'));
 
 const RouteController = () => {
-  const auth = useSelector(state => state.auth);
-  console.log(auth);
   return useRoutes([
     {
       path: "",
